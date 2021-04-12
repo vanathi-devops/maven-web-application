@@ -1,0 +1,90 @@
+pipeline
+{
+agent any
+tools
+{ 
+maven 'maven3.6.3'
+}
+
+triggers
+{
+pollSCM ('* * * * *')
+}
+options
+{
+//add time stamp to console output
+timestamps()
+// discard old builds
+buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '3'))
+}
+
+   stages
+  {
+     stage('checkoutcode')
+      {
+        steps
+                 {
+                   git credentialsId: '15437951-7739-45bf-8d9f-7327e125c0d2', url: 'https://github.com/vanathi-devops/maven-web-application.git'
+                  }
+      }
+
+  stage('Build')
+  {
+  steps
+   {
+   sh "mvn clean package"
+   }
+  }
+  
+  stage('ExecuteSonarReport')
+  {
+  steps
+   {
+   sh "mvn sonar:sonar"
+   }
+  }
+
+  stage('UploadArtifactintoNexus')
+  {
+  steps
+   {
+   sh "mvn deploy"
+   }
+  }
+
+stage('DeployintoTomcatserver')
+  {
+  steps
+   {
+sshagent(['b019308c-e7b0-401f-bd82-608606bdb13c'])
+ {
+sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.127.209.205:/opt/tomcat9/webapps/"
+   }
+  }
+  
+  }
+}
+
+post
+{
+
+success
+{
+
+emailext body: '''Build is Successfull - Declarative way
+
+Thanks,
+Vanathi
+729994294''', subject: 'Build is Over- Declarative way', to: 'vanathipandithan.vg@gmail.com'
+}
+
+failure
+{
+emailext body: '''Build is Failed - Declarative way
+
+Thanks,
+Vanathi
+729994294''', subject: 'Build is Over- Failed-Declarative way', to: 'vanathipandithan.vg@gmail.com'
+}
+}
+}
