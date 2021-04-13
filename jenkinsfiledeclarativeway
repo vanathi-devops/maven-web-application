@@ -8,7 +8,7 @@ maven 'maven3.6.3'
 
 triggers
 {
-pollSCM ('* * * * *')
+//pollSCM ('* * * * *')
 }
 options
 {
